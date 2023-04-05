@@ -225,6 +225,7 @@ fn router(state: Arc<State>, cfg: Arc<RtcServe>) -> Result<Router> {
     let mut serve_dir = get_service(
         ServeDir::new(&state.dist_dir).fallback(ServeFile::new(&state.dist_dir.join(INDEX_HTML))),
     );
+
     for (key, value) in &state.headers {
         let name = HeaderName::from_bytes(key.as_bytes())
             .with_context(|| format!("invalid header {:?}", key))?;
@@ -238,10 +239,7 @@ fn router(state: Arc<State>, cfg: Arc<RtcServe>) -> Result<Router> {
         .fallback_service(
             Router::new().nest_service(
                 public_route,
-                get_service(
-                    ServeDir::new(&state.dist_dir)
-                        .fallback(ServeFile::new(state.dist_dir.join(INDEX_HTML))),
-                )
+                serve_dir
                 .handle_error(|error| async move {
                     tracing::error!(?error, "failed serving static file");
                     StatusCode::INTERNAL_SERVER_ERROR
